@@ -17,6 +17,17 @@ impl GameResult {
     }
 }
 
+impl From<&str> for GameResult {
+    fn from(s: &str) -> Self {
+        match s {
+            "X" => Self::Loss,
+            "Y" => Self::Draw,
+            "Z" => Self::Win,
+            _ => unreachable!(),
+        }
+    }
+}
+
 enum Moves {
     Rock,
     Paper,
@@ -43,6 +54,20 @@ impl Moves {
             (Self::Paper, Self::Scissors)
             | (Self::Scissors, Self::Rock)
             | (Self::Rock, Self::Paper) => GameResult::Loss,
+        }
+    }
+
+    fn what_to_play(opponent: &Self, desired_result: &GameResult) -> Moves {
+        match (opponent, desired_result) {
+            (Self::Rock, GameResult::Draw)
+            | (Self::Scissors, GameResult::Win)
+            | (Self::Paper, GameResult::Loss) => Self::Rock,
+            (Self::Rock, GameResult::Win)
+            | (Self::Paper, GameResult::Draw)
+            | (Self::Scissors, GameResult::Loss) => Self::Paper,
+            (Self::Rock, GameResult::Loss)
+            | (Self::Paper, GameResult::Win)
+            | (Self::Scissors, GameResult::Draw) => Self::Scissors,
         }
     }
 }
@@ -79,6 +104,29 @@ pub fn follow_strategy(strategy: &str) -> u32 {
     total_points
 }
 
+pub fn follow_strategy_part_two(strategy: &str) -> u32 {
+    let moves = strategy
+        .lines()
+        .map(|line: &str| {
+            line.split_once(" ")
+                .map(|(opponent, desired_result): (&str, &str)| {
+                    (Moves::from(opponent), GameResult::from(desired_result))
+                })
+        })
+        .filter_map(|turn| turn);
+
+    let total_points = moves.fold(0, |acc, turn| {
+        let (opponent, desired_result) = turn;
+        let elf = Moves::what_to_play(&opponent, &desired_result);
+        let move_points = Moves::points(&elf);
+        let game_points = GameResult::points(&desired_result);
+
+        acc + move_points + game_points
+    });
+
+    total_points
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -89,7 +137,17 @@ mod tests {
     }
 
     #[test]
+    fn test_sample_part_two() {
+        assert_eq!(follow_strategy_part_two(EXAMPLE), 12);
+    }
+
+    #[test]
     fn test_puzzle() {
         assert_eq!(follow_strategy(PUZZLE_INPUT), 13675);
+    }
+
+    #[test]
+    fn test_puzzle_part_two() {
+        assert_eq!(follow_strategy_part_two(PUZZLE_INPUT), 14184);
     }
 }
