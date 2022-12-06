@@ -2,16 +2,22 @@ const EXAMPLE: &str = include_str!("sample.txt");
 const PUZZLE_INPUT: &str = include_str!("puzzle_input.txt");
 
 pub fn calories_by_elf(input: &str) -> Vec<u32> {
-    input.split("\n\n").map(|elf: &str| {
-        elf.lines()
-            .map(|calories: &str| calories.parse::<u32>())
-            .filter_map(|calories| calories.ok())
-            .sum::<u32>()
-    }).collect()
+    input
+        .split("\n\n")
+        .map(|elf: &str| {
+            elf.lines()
+                .map(|calories: &str| calories.parse::<u32>())
+                .filter_map(|calories| calories.ok())
+                .sum::<u32>()
+        })
+        .collect()
 }
 
 pub fn elf_with_most_calories(input: &str) -> u32 {
-    calories_by_elf(input).into_iter().max().expect("Unable to find the max calories of an elf")
+    calories_by_elf(input)
+        .into_iter()
+        .max()
+        .expect("Unable to find the max calories of an elf")
 }
 
 pub fn sum_of_three_elves_with_most_calories(input: &str) -> u32 {
