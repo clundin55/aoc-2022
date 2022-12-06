@@ -6,6 +6,11 @@ use regex::Regex;
 const EXAMPLE: &str = include_str!("sample.txt");
 const PUZZLE_INPUT: &str = include_str!("puzzle_input.txt");
 
+pub enum MoveMethod {
+    Stack,
+    RetainOrder,
+}
+
 #[derive(Debug, Clone)]
 struct Crate(char);
 
@@ -54,6 +59,7 @@ impl CrateMap {
     fn new() -> Self {
         Self(BTreeMap::new())
     }
+
     fn move_crate(&mut self, m: Move) {
         let source_stack = self.0.get_mut(&m.source_index).unwrap();
         let mut moving_crates = VecDeque::new();
@@ -61,6 +67,23 @@ impl CrateMap {
         for _ in 0..m.number_of_crates {
             if let Some(item) = source_stack.pop_back() {
                 moving_crates.push_back(item);
+            }
+        }
+
+        if let Some(target_stack) = self.0.get_mut(&m.target_index) {
+            target_stack.append(&mut moving_crates);
+        } else {
+            self.0.insert(m.target_index, moving_crates);
+        }
+    }
+
+    fn move_crate_retain_order(&mut self, m: Move) {
+        let source_stack = self.0.get_mut(&m.source_index).unwrap();
+        let mut moving_crates = VecDeque::new();
+
+        for _ in 0..m.number_of_crates {
+            if let Some(item) = source_stack.pop_back() {
+                moving_crates.push_front(item);
             }
         }
 
@@ -115,7 +138,7 @@ impl CrateMap {
     }
 }
 
-pub fn find_top_of_crate_stacks(input: &str) -> String {
+pub fn find_top_of_crate_stacks(input: &str, method: MoveMethod) -> String {
     let mut stack_map = CrateMap::build_map(input);
     let moves: Vec<Move> = input
         .lines()
@@ -128,7 +151,10 @@ pub fn find_top_of_crate_stacks(input: &str) -> String {
         .collect();
 
     for m in moves {
-        stack_map.move_crate(m);
+        match method {
+            MoveMethod::Stack => stack_map.move_crate(m),
+            MoveMethod::RetainOrder => stack_map.move_crate_retain_order(m),
+        }
     }
 
     let tops = stack_map.stack_tops();
@@ -148,14 +174,33 @@ mod tests {
 
     #[test]
     fn test_sample() {
-        assert_eq!(find_top_of_crate_stacks(EXAMPLE), "CMZ".to_owned());
+        assert_eq!(
+            find_top_of_crate_stacks(EXAMPLE, MoveMethod::Stack),
+            "CMZ".to_owned()
+        );
     }
 
     #[test]
     fn test_puzzle() {
         assert_eq!(
-            find_top_of_crate_stacks(PUZZLE_INPUT),
+            find_top_of_crate_stacks(PUZZLE_INPUT, MoveMethod::Stack),
             "TLFGBZHCN".to_owned()
+        );
+    }
+
+    #[test]
+    fn test_sample_part_two() {
+        assert_eq!(
+            find_top_of_crate_stacks(EXAMPLE, MoveMethod::RetainOrder),
+            "MCD".to_owned()
+        );
+    }
+
+    #[test]
+    fn test_puzzle_part_two() {
+        assert_eq!(
+            find_top_of_crate_stacks(PUZZLE_INPUT, MoveMethod::RetainOrder),
+            "QRQFHFWCL".to_owned()
         );
     }
 }
