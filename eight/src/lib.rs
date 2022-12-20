@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::HashSet;
 
 const EXAMPLE: &str = include_str!("sample.txt");
 const PUZZLE_INPUT: &str = include_str!("puzzle_input.txt");
@@ -33,55 +33,50 @@ impl Tree {
 }
 
 pub fn check_if_tree_is_visible(tree: &Tree, trees: &Vec<Vec<u32>>) -> bool {
-    let mut saw_a_larger_tree = false;
-    for other_tree in trees[tree.x()].iter().skip(tree.y() + 1) {
-        if tree.height() <= *other_tree {
-            saw_a_larger_tree = true;
-            break;
+    let mut results = HashSet::new();
+
+    results.insert({
+        let mut result = true;
+        for other_tree in trees[tree.x()].iter().skip(tree.y() + 1) {
+            if tree.height() <= *other_tree {
+                result = false;
+            }
         }
-    }
+        result
+    });
 
-    if !saw_a_larger_tree {
-        return true;
-    }
-
-    saw_a_larger_tree = false;
-    for other_tree in trees[tree.x()].iter().take(tree.y()) {
-        if tree.height() <= *other_tree {
-            saw_a_larger_tree = true;
-            break;
+    results.insert({
+        let mut result = true;
+        for other_tree in trees[tree.x()].iter().take(tree.y()) {
+            if tree.height() <= *other_tree {
+                result = false;
+            }
         }
-    }
+        result
+    });
 
-    if !saw_a_larger_tree {
-        return true;
-    }
-
-    saw_a_larger_tree = false;
-    for other_trees in trees.iter().take(tree.x()) {
-        if tree.height() <= other_trees[tree.y()] {
-            saw_a_larger_tree = true;
-            break;
+    results.insert({
+        let mut result = true;
+        for other_trees in trees.iter().take(tree.x()) {
+            if tree.height() <= other_trees[tree.y()] {
+                result = false;
+            }
         }
-    }
+        result
+    });
 
-    if !saw_a_larger_tree {
-        return true;
-    }
+    results.insert({
+        let mut result = true;
+        for other_trees in trees.iter().skip(tree.x() + 1) {
+            if tree.height() <= other_trees[tree.y()] {
 
-    saw_a_larger_tree = false;
-    for other_trees in trees.iter().skip(tree.x() + 1) {
-        if tree.height() <= other_trees[tree.y()] {
-            saw_a_larger_tree = true;
-            break;
+                result = false;
+            }
         }
-    }
+        result
+    });
 
-    if !saw_a_larger_tree {
-        return true;
-    }
-
-    false
+   results.contains(&true)
 }
 
 pub fn check_for_visible_trees(input: &str) -> usize {
